@@ -188,10 +188,8 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
  */
 - (void)saveLastOutgoingRmqId:(int64_t)rmqID {
   dispatch_async(_databaseOperationQueue, ^{
-    NSString *queryFormat = @"INSERT OR REPLACE INTO %@ (%@, %@) VALUES (?, ?)";
-    NSString *query = [NSString stringWithFormat:queryFormat,
-                                                 kTableLastRmqId,           // table
-                                                 kIdColumn, kRmqIdColumn];  // columns
+    NSString *queryFormat = @"INSERT OR REPLACE INTO " + kTableLastRmqId + @" (" + kTableLastRmqId + @", "+ kRmqIdColumn + @") VALUES (?, ?)";
+    NSString *query = [NSString stringWithFormat:queryFormat];  // columns
     sqlite3_stmt *statement;
     if (sqlite3_prepare_v2(self->_database, [query UTF8String], -1, &statement, NULL) !=
         SQLITE_OK) {
@@ -212,8 +210,8 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
 
 - (void)saveS2dMessageWithRmqId:(NSString *)rmqId {
   dispatch_async(_databaseOperationQueue, ^{
-    NSString *insertFormat = @"INSERT INTO %@ (%@) VALUES (?)";
-    NSString *insertSQL = [NSString stringWithFormat:insertFormat, kTableS2DRmqIds, kRmqIdColumn];
+    NSString *insertFormat = @"INSERT INTO " + kTableS2DRmqIds + @" (" + kRmqIdColumn +@") VALUES (?)";
+    NSString *insertSQL = [NSString stringWithFormat:insertFormat];
     sqlite3_stmt *insert_statement;
     if (sqlite3_prepare_v2(self->_database, [insertSQL UTF8String], -1, &insert_statement, NULL) !=
         SQLITE_OK) {
@@ -233,12 +231,8 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
 #pragma mark - Query
 
 - (int64_t)queryHighestRmqId {
-  NSString *queryFormat = @"SELECT %@ FROM %@ ORDER BY %@ DESC LIMIT %d";
-  NSString *query = [NSString stringWithFormat:queryFormat,
-                                               kRmqIdColumn,               // column
-                                               kTableOutgoingRmqMessages,  // table
-                                               kRmqIdColumn,               // order by column
-                                               1];                         // limit
+  NSString *queryFormat = @"SELECT " + kRmqIdColumn + @" FROM " + kTableOutgoingRmqMessages + @" ORDER BY " + kRmqIdColumn + @" DESC LIMIT %d";
+  NSString *query = [NSString stringWithFormat:queryFormat, 1];                         // limit
 
   sqlite3_stmt *statement;
   int64_t highestRmqId = 0;
@@ -253,12 +247,8 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
 }
 
 - (int64_t)queryLastRmqId {
-  NSString *queryFormat = @"SELECT %@ FROM %@ ORDER BY %@ DESC LIMIT %d";
-  NSString *query = [NSString stringWithFormat:queryFormat,
-                                               kRmqIdColumn,     // column
-                                               kTableLastRmqId,  // table
-                                               kRmqIdColumn,     // order by column
-                                               1];               // limit
+  NSString *queryFormat = @"SELECT " + kRmqIdColumn + @" FROM " + kTableLastRmqId + @" ORDER BY " + kRmqIdColumn + @" DESC LIMIT %d";
+  NSString *query = [NSString stringWithFormat:queryFormat, 1];               // limit
 
   sqlite3_stmt *statement;
   int64_t lastRmqId = 0;
@@ -277,14 +267,8 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
 - (FIRMessagingPersistentSyncMessage *)querySyncMessageWithRmqID:(NSString *)rmqID {
   __block FIRMessagingPersistentSyncMessage *persistentMessage;
   dispatch_sync(_databaseOperationQueue, ^{
-    NSString *queryFormat = @"SELECT %@ FROM %@ WHERE %@ = '%@'";
-    NSString *query =
-        [NSString stringWithFormat:queryFormat,
-                                   kSyncMessagesColumns,  // SELECT (rmq_id, expiration_ts,
-                                                          // apns_recv, mcs_recv)
-                                   kTableSyncMessages,    // FROM sync_rmq
-                                   kRmqIdColumn,          // WHERE rmq_id
-                                   rmqID];
+    NSString *queryFormat = @"SELECT " + kSyncMessagesColumns + @" FROM " + kTableSyncMessages + @" WHERE " + kRmqIdColumn + @" = '%@'";
+    NSString *query = [NSString stringWithFormat:queryFormat, rmqID];
 
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(self->_database, [query UTF8String], -1, &stmt, NULL) != SQLITE_OK) {
@@ -325,12 +309,9 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
 - (void)deleteExpiredOrFinishedSyncMessages {
   dispatch_async(_databaseOperationQueue, ^{
     int64_t now = FIRMessagingCurrentTimestampInSeconds();
-    NSString *deleteSQL = @"DELETE FROM %@ "
-                          @"WHERE %@ < %lld OR "   // expirationTime < now
-                          @"(%@ = 1 AND %@ = 1)";  // apns_received = 1 AND mcs_received = 1
-    NSString *query = [NSString
-        stringWithFormat:deleteSQL, kTableSyncMessages, kSyncMessageExpirationTimestampColumn, now,
-                         kSyncMessageAPNSReceivedColumn, kSyncMessageMCSReceivedColumn];
+    NSString *deleteSQL = @"DELETE FROM " + kTableSyncMessages + @" WHERE " + kSyncMessageExpirationTimestampColumn + @" < %lld OR "   // expirationTime < now
+                          @"(" + kSyncMessageAPNSReceivedColumn + @" = 1 AND " + kSyncMessageMCSReceivedColumn + @" = 1)";  // apns_received = 1 AND mcs_received = 1
+    NSString *query = [NSString stringWithFormat:deleteSQL, now];
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(self->_database, [query UTF8String], -1, &stmt, NULL) != SQLITE_OK) {
       FIRMessagingRmqLogAndReturn(stmt);
@@ -353,14 +334,8 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
   BOOL apnsReceived = YES;
   BOOL mcsReceived = NO;
   dispatch_async(_databaseOperationQueue, ^{
-    NSString *insertFormat = @"INSERT INTO %@ (%@, %@, %@, %@) VALUES (?, ?, ?, ?)";
-    NSString *insertSQL =
-        [NSString stringWithFormat:insertFormat,
-                                   kTableSyncMessages,                     // Table name
-                                   kRmqIdColumn,                           // rmq_id
-                                   kSyncMessageExpirationTimestampColumn,  // expiration_ts
-                                   kSyncMessageAPNSReceivedColumn,         // apns_recv
-                                   kSyncMessageMCSReceivedColumn /* mcs_recv */];
+    NSString *insertFormat = @"INSERT INTO " + kTableSyncMessages + @" (" + kRmqIdColumn + @", " + kSyncMessageExpirationTimestampColumn + @", " + kSyncMessageAPNSReceivedColumn + @", " + kSyncMessageMCSReceivedColumn + @") VALUES (?, ?, ?, ?)";
+    NSString *insertSQL = [NSString stringWithFormat:insertFormat];
 
     sqlite3_stmt *stmt;
 
@@ -404,11 +379,9 @@ NSString *_Nonnull FIRMessagingStringFromSQLiteResult(int result) {
 
 - (BOOL)updateSyncMessageWithRmqID:(NSString *)rmqID column:(NSString *)column value:(BOOL)value {
   FIRMessaging_MUST_NOT_BE_MAIN_THREAD();
-  NSString *queryFormat = @"UPDATE %@ "     // Table name
-                          @"SET %@ = %d "   // column=value
-                          @"WHERE %@ = ?";  // condition
-  NSString *query = [NSString
-      stringWithFormat:queryFormat, kTableSyncMessages, column, value ? 1 : 0, kRmqIdColumn];
+  NSString *queryFormat = @"UPDATE " + kTableSyncMessages + @" SET " + column + @" = %d "   // column=value
+                          @"WHERE " + kRmqIdColumn + @" = ?";  // condition
+  NSString *query = [NSString stringWithFormat:queryFormat, value ? 1 : 0];
   sqlite3_stmt *stmt;
 
   if (sqlite3_prepare_v2(_database, [query UTF8String], -1, &stmt, NULL) != SQLITE_OK) {

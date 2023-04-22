@@ -22,6 +22,8 @@ import re
 import subprocess
 import string
 
+import six
+
 NO_HEADING = 'PRODUCT HAS NO HEADING'
 
 
@@ -76,8 +78,8 @@ def main():
 
 
 def find_local_repo():
-  url = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url'],
-                                text=True, errors='replace')
+  url = six.ensure_text(
+      subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']))
 
   # ssh or https style URL
   m = re.match(r'^(?:git@github\.com:|https://github\.com/)(.*)\.git$', url)

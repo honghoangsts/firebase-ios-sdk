@@ -28,7 +28,6 @@
 #import "FirebaseAuth/Sources/Public/FirebaseAuth/FirebaseAuth.h"
 #import "FirebaseCore/Extension/FirebaseCoreInternal.h"
 
-#import "FirebaseAppCheck/Interop/FIRAppCheckInterop.h"
 #import "FirebaseAuth/Sources/Auth/FIRAuthDataResult_Internal.h"
 #import "FirebaseAuth/Sources/Auth/FIRAuthDispatcher.h"
 #import "FirebaseAuth/Sources/Auth/FIRAuthGlobalWorkQueue.h"
@@ -47,8 +46,6 @@
 #import "FirebaseAuth/Sources/Backend/RPC/FIRGetOOBConfirmationCodeResponse.h"
 #import "FirebaseAuth/Sources/Backend/RPC/FIRResetPasswordRequest.h"
 #import "FirebaseAuth/Sources/Backend/RPC/FIRResetPasswordResponse.h"
-#import "FirebaseAuth/Sources/Backend/RPC/FIRRevokeTokenRequest.h"
-#import "FirebaseAuth/Sources/Backend/RPC/FIRRevokeTokenResponse.h"
 #import "FirebaseAuth/Sources/Backend/RPC/FIRSendVerificationCodeRequest.h"
 #import "FirebaseAuth/Sources/Backend/RPC/FIRSendVerificationCodeResponse.h"
 #import "FirebaseAuth/Sources/Backend/RPC/FIRSetAccountInfoRequest.h"
@@ -465,8 +462,7 @@ static NSMutableDictionary *gKeychainServiceNameForAppName;
   self = [self initWithAPIKey:app.options.APIKey
                       appName:app.name
                         appID:app.options.googleAppID
-              heartbeatLogger:app.heartbeatLogger
-                     appCheck:FIR_COMPONENT(FIRAppCheckInterop, app.container)];
+              heartbeatLogger:app.heartbeatLogger];
   if (self) {
     _app = app;
 #if TARGET_OS_IOS
@@ -479,22 +475,20 @@ static NSMutableDictionary *gKeychainServiceNameForAppName;
 - (nullable instancetype)initWithAPIKey:(NSString *)APIKey
                                 appName:(NSString *)appName
                                   appID:(NSString *)appID {
-  return [self initWithAPIKey:APIKey appName:appName appID:appID heartbeatLogger:nil appCheck:nil];
+  return [self initWithAPIKey:APIKey appName:appName appID:appID heartbeatLogger:nil];
 }
 
 - (nullable instancetype)initWithAPIKey:(NSString *)APIKey
                                 appName:(NSString *)appName
                                   appID:(NSString *)appID
-                        heartbeatLogger:(nullable id<FIRHeartbeatLoggerProtocol>)heartbeatLogger
-                               appCheck:(nullable id<FIRAppCheckInterop>)appCheck {
+                        heartbeatLogger:(nullable id<FIRHeartbeatLoggerProtocol>)heartbeatLogger {
   self = [super init];
   if (self) {
     _listenerHandles = [NSMutableArray array];
     _requestConfiguration = [[FIRAuthRequestConfiguration alloc] initWithAPIKey:APIKey
                                                                           appID:appID
                                                                            auth:self
-                                                                heartbeatLogger:heartbeatLogger
-                                                                       appCheck:appCheck];
+                                                                heartbeatLogger:heartbeatLogger];
     _firebaseAppName = [appName copy];
 #if TARGET_OS_IOS
     _settings = [[FIRAuthSettings alloc] init];
@@ -526,41 +520,54 @@ static NSMutableDictionary *gKeychainServiceNameForAppName;
           [[FIRAuthStoredUserManager alloc] initWithServiceName:keychainServiceName];
     }
 
-    NSString *storedUserAccessGroup = [strongSelf.storedUserManager getStoredUserAccessGroup];
-    if (!storedUserAccessGroup) {
-      FIRUser *user;
-      NSError *error;
-      if ([strongSelf getUser:&user error:&error]) {
-        strongSelf.tenantID = user.tenantID;
-        [strongSelf updateCurrentUser:user byForce:NO savingToDisk:NO error:&error];
-        self->_lastNotifiedUserToken = user.rawAccessToken;
-      } else {
+    NSError *error;
+    NSString *storedUserAccessGroup =
+        [strongSelf.storedUserManager getStoredUserAccessGroupWithError:&error];
+    if (!error) {
+      if (!storedUserAccessGroup) {
+        FIRUser *user;
+        if ([strongSelf getUser:&user error:&error]) {
+          strongSelf.tenantID = user.tenantID;
+          [strongSelf updateCurrentUser:user byForce:NO savingToDisk:NO error:&error];
+          self->_lastNotifiedUserToken = user.rawAccessToken;
+        } else {
 #if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
-        if (error.code == FIRAuthErrorCodeKeychainError) {
-          // If there's a keychain error, assume it is due to the keychain being accessed
-          // before the device is unlocked as a result of prewarming, and listen for the
-          // UIApplicationProtectedDataDidBecomeAvailable notification.
-          [strongSelf addProtectedDataDidBecomeAvailableObserver];
-        }
+          if (error.code == FIRAuthErrorCodeKeychainError) {
+            // If there's a keychain error, assume it is due to the keychain being accessed
+            // before the device is unlocked as a result of prewarming, and listen for the
+            // UIApplicationProtectedDataDidBecomeAvailable notification.
+            [strongSelf addProtectedDataDidBecomeAvailableObserver];
+          }
 #endif  // TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
-        FIRLogError(kFIRLoggerAuth, @"I-AUT000001",
-                    @"Error loading saved user when starting up: %@", error);
+          FIRLogError(kFIRLoggerAuth, @"I-AUT000001",
+                      @"Error loading saved user when starting up: %@", error);
+        }
+      } else {
+        [strongSelf internalUseUserAccessGroup:storedUserAccessGroup error:&error];
+        if (error) {
+#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
+          if (error.code == FIRAuthErrorCodeKeychainError) {
+            // If there's a keychain error, assume it is due to the keychain being accessed
+            // before the device is unlocked as a result of prewarming, and listen for the
+            // UIApplicationProtectedDataDidBecomeAvailable notification.
+            [strongSelf addProtectedDataDidBecomeAvailableObserver];
+          }
+#endif  // TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
+          FIRLogError(kFIRLoggerAuth, @"I-AUT000001",
+                      @"Error loading saved user when starting up: %@", error);
+        }
       }
     } else {
-      NSError *error;
-      [strongSelf internalUseUserAccessGroup:storedUserAccessGroup error:&error];
-      if (error) {
 #if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
-        if (error.code == FIRAuthErrorCodeKeychainError) {
-          // If there's a keychain error, assume it is due to the keychain being accessed
-          // before the device is unlocked as a result of prewarming, and listen for the
-          // UIApplicationProtectedDataDidBecomeAvailable notification.
-          [strongSelf addProtectedDataDidBecomeAvailableObserver];
-        }
-#endif  // TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
-        FIRLogError(kFIRLoggerAuth, @"I-AUT000001",
-                    @"Error loading saved user when starting up: %@", error);
+      if (error.code == FIRAuthErrorCodeKeychainError) {
+        // If there's a keychain error, assume it is due to the keychain being accessed
+        // before the device is unlocked as a result of prewarming, and listen for the
+        // UIApplicationProtectedDataDidBecomeAvailable notification.
+        [strongSelf addProtectedDataDidBecomeAvailableObserver];
       }
+#endif  // TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_MACCATALYST
+      FIRLogError(kFIRLoggerAuth, @"I-AUT000001", @"Error loading saved user when starting up: %@",
+                  error);
     }
 
 #if TARGET_OS_IOS
@@ -1533,34 +1540,6 @@ static NSMutableDictionary *gKeychainServiceNameForAppName;
   });
 }
 
-- (void)revokeTokenWithAuthorizationCode:(NSString *)authorizationCode
-                              completion:(nullable void (^)(NSError *_Nullable error))completion {
-  [self.currentUser
-      getIDTokenWithCompletion:^(NSString *_Nullable idToken, NSError *_Nullable error) {
-        if (completion) {
-          if (error) {
-            completion(error);
-            return;
-          }
-        }
-        FIRRevokeTokenRequest *request =
-            [[FIRRevokeTokenRequest alloc] initWithToken:authorizationCode
-                                                 idToken:idToken
-                                    requestConfiguration:self->_requestConfiguration];
-        [FIRAuthBackend
-            revokeToken:request
-               callback:^(FIRRevokeTokenResponse *_Nullable response, NSError *_Nullable error) {
-                 if (completion) {
-                   if (error) {
-                     completion(error);
-                   } else {
-                     completion(nil);
-                   }
-                 }
-               }];
-      }];
-}
-
 #if TARGET_OS_IOS
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-property-ivar"
@@ -2294,7 +2273,7 @@ static NSMutableDictionary *gKeychainServiceNameForAppName;
 - (BOOL)internalUseUserAccessGroup:(NSString *_Nullable)accessGroup
                              error:(NSError *_Nullable *_Nullable)outError {
   BOOL success;
-  success = [self.storedUserManager setStoredUserAccessGroup:accessGroup];
+  success = [self.storedUserManager setStoredUserAccessGroup:accessGroup error:outError];
   if (!success) {
     return NO;
   }

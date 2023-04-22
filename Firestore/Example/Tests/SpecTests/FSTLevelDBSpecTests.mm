@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 /** Overrides -[FSTSpecTests persistence] */
-- (std::unique_ptr<Persistence>)persistenceWithEagerGCForMemory:(__unused BOOL)eagerGC {
+- (std::unique_ptr<Persistence>)persistenceWithGCEnabled:(__unused BOOL)GCEnabled {
   return LevelDbPersistenceForTesting(_levelDbDir);
 }
 

@@ -6,7 +6,7 @@
     ],
     "config": {
       "numClients": 1,
-      "useEagerGCForMemory": true
+      "useGarbageCollection": true
     },
     "steps": [
       {
@@ -46,7 +46,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "cg/1",
               "options": {
                 "hasCommittedMutations": false,
@@ -81,7 +80,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/1",
                 "options": {
                   "hasCommittedMutations": false,
@@ -155,7 +153,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "cg/2",
               "options": {
                 "hasCommittedMutations": false,
@@ -190,7 +187,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/2",
                 "options": {
                   "hasCommittedMutations": false,
@@ -276,7 +272,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "not-cg/nope/cg/3",
               "options": {
                 "hasCommittedMutations": false,
@@ -311,7 +306,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "not-cg/nope/cg/3",
                 "options": {
                   "hasCommittedMutations": false,
@@ -409,7 +403,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "not-cg/nope",
               "options": {
                 "hasCommittedMutations": false,
@@ -444,7 +437,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "not-cg/nope",
                 "options": {
                   "hasCommittedMutations": false,
@@ -554,7 +546,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "cg/1/not-cg/nope",
               "options": {
                 "hasCommittedMutations": false,
@@ -589,7 +580,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/1/not-cg/nope",
                 "options": {
                   "hasCommittedMutations": false,
@@ -630,7 +620,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/1",
                 "options": {
                   "hasCommittedMutations": false,
@@ -642,7 +631,6 @@
                 "version": 1000
               },
               {
-                "createTime": 0,
                 "key": "cg/2",
                 "options": {
                   "hasCommittedMutations": false,
@@ -654,7 +642,6 @@
                 "version": 1000
               },
               {
-                "createTime": 0,
                 "key": "not-cg/nope/cg/3",
                 "options": {
                   "hasCommittedMutations": false,
@@ -778,7 +765,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/1",
                 "options": {
                   "hasCommittedMutations": false,
@@ -790,7 +776,6 @@
                 "version": 1000
               },
               {
-                "createTime": 0,
                 "key": "not-cg/nope/cg/3",
                 "options": {
                   "hasCommittedMutations": false,
@@ -925,7 +910,7 @@
     ],
     "config": {
       "numClients": 1,
-      "useEagerGCForMemory": true
+      "useGarbageCollection": true
     },
     "steps": [
       {
@@ -965,7 +950,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "cg/1",
               "options": {
                 "hasCommittedMutations": false,
@@ -1000,7 +984,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/1",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1074,7 +1057,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "not-cg/nope",
               "options": {
                 "hasCommittedMutations": false,
@@ -1109,7 +1091,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "not-cg/nope",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1174,7 +1155,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/1",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1186,7 +1166,6 @@
                 "version": 1000
               },
               {
-                "createTime": 0,
                 "key": "cg/2",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1198,7 +1177,6 @@
                 "version": 0
               },
               {
-                "createTime": 0,
                 "key": "not-cg/nope/cg/3",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1286,7 +1264,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "cg/1",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1298,7 +1275,6 @@
                 "version": 1000
               },
               {
-                "createTime": 0,
                 "key": "not-cg/nope/cg/3",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1397,7 +1373,7 @@
     ],
     "config": {
       "numClients": 1,
-      "useEagerGCForMemory": true
+      "useGarbageCollection": true
     },
     "steps": [
       {
@@ -1437,7 +1413,6 @@
         "watchEntity": {
           "docs": [
             {
-              "createTime": 0,
               "key": "collection/a",
               "options": {
                 "hasCommittedMutations": false,
@@ -1472,7 +1447,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "collection/a",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1511,7 +1485,6 @@
             "hasPendingWrites": true,
             "modified": [
               {
-                "createTime": 0,
                 "key": "collection/a",
                 "options": {
                   "hasCommittedMutations": false,
@@ -1553,7 +1526,6 @@
           {
             "added": [
               {
-                "createTime": 0,
                 "key": "collection/a",
                 "options": {
                   "hasCommittedMutations": false,

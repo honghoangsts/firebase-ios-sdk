@@ -24,12 +24,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication
                      .LaunchOptionsKey: Any]?) -> Bool {
-    let providerFactory = AppCheckDebugProviderFactory()
-    AppCheck.setAppCheckProviderFactory(providerFactory)
-
     FirebaseApp.configure()
-
-    requestLimitedUseToken()
 
     requestDeviceCheckToken()
 
@@ -96,20 +91,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let error = error {
           print("Debug error: \(error)")
         }
-      }
-    }
-  }
-
-  // MARK: App Check API
-
-  func requestLimitedUseToken() {
-    AppCheck.appCheck().limitedUseToken { result, error in
-      if let result = result {
-        print("FAC limited-use token: \(result.token), expiration date: \(result.expirationDate)")
-      }
-
-      if let error = error {
-        print("Error: \(String(describing: error))")
       }
     }
   }

@@ -14,6 +14,8 @@
 
 #import "FirebaseTestingSupport/Firestore/Sources/Public/FirebaseFirestoreTestingSupport/FIRQueryFake.h"
 
+#import "Firestore/Source/API/FIRQuery+Internal.h"
+
 @implementation FIRQueryFake
 
 - (instancetype)init {

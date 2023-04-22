@@ -16,6 +16,7 @@ from __future__ import division
 
 import math
 import multiprocessing.pool
+import six
 import sys
 import threading
 
@@ -54,9 +55,7 @@ class Result(object):
 
   def __init__(self, num_errors, output):
     self.errors = num_errors
-    self.output = (output
-                   if isinstance(output, str)
-                   else output.decode('utf8', errors='replace'))
+    self.output = six.ensure_text(output)
 
   @staticmethod
   def from_list(errors):
